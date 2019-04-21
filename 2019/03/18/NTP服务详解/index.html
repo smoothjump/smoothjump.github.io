@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="">
+    <!-- title -->
+
+
+
+
+<!-- keywords -->
+
+
+
+
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="author" content="Arlen Li">
+    <meta name="renderer" content="webkit">
+    <meta name="copyright" content="Arlen Li">
+    
+    <meta name="keywords" content="hexo,hexo-theme,hexo-blog">
+    
+    <meta name="description" content>
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>NTP服务详解 · fi3ework&#39;s Studio</title>
+    <style type="text/css">
+    @font-face {
+        font-family: 'Oswald-Regular';
+        src: url("/font/Oswald-Regular.ttf");
+    }
+
+    body {
+        margin: 0;
+    }
+
+    header,
+    footer,
+    .back-top,
+    .sidebar,
+    .container,
+    .site-intro-meta,
+    .toc-wrapper {
+        display: none;
+    }
+
+    .site-intro {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        /* height: 50vh; */
+        overflow: hidden;
+    }
+
+    .site-intro-placeholder {
+        position: absolute;
+        z-index: -2;
+        top: 0;
+        left: 0;
+        width: calc(100% + 300px);
+        height: 100%;
+        background: repeating-linear-gradient(-45deg, #444 0, #444 80px, #333 80px, #333 160px);
+        background-position: center center;
+        transform: translate3d(-226px, 0, 0);
+        animation: gradient-move 2.5s ease-out 0s infinite;
+    }
+
+    @keyframes gradient-move {
+        0% {
+            transform: translate3d(-226px, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+</style>
+
+    <link rel="preload" href="/css/style.css?v=20180824" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="/css/mobile.css?v=20180824" media="(max-width: 980px)">
+    
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+/* This file is meant as a standalone workflow for
+- testing support for link[rel=preload]
+- enabling async CSS loading in browsers that do not support rel=preload
+- applying rel preload css once loaded, whether supported or not.
+*/ -->
+<script>
+(function( w ){
+	"use strict";
+	// rel=preload support test
+	if( !w.loadCSS ){
+		w.loadCSS = function(){};
+	}
+	// define on the loadCSS obj
+	var rp = loadCSS.relpreload = {};
+	// rel=preload feature support test
+	// runs once and returns a function for compat purposes
+	rp.support = (function(){
+		var ret;
+		try {
+			ret = w.document.createElement( "link" ).relList.supports( "preload" );
+		} catch (e) {
+			ret = false;
+		}
+		return function(){
+			return ret;
+		};
+	})();
+
+	// if preload isn't supported, get an asynchronous load by using a non-matching media attribute
+	// then change that media back to its intended value on load
+	rp.bindMediaToggle = function( link ){
+		// remember existing media attr for ultimate state, or default to 'all'
+		var finalMedia = link.media || "all";
+
+		function enableStylesheet(){
+			link.media = finalMedia;
+		}
+
+		// bind load handlers to enable media
+		if( link.addEventListener ){
+			link.addEventListener( "load", enableStylesheet );
+		} else if( link.attachEvent ){
+			link.attachEvent( "onload", enableStylesheet );
+		}
+
+		// Set rel and non-applicable media type to start an async request
+		// note: timeout allows this to happen async to let rendering continue in IE
+		setTimeout(function(){
+			link.rel = "stylesheet";
+			link.media = "only x";
+		});
+		// also enable media after 3 seconds,
+		// which will catch very old browsers (android 2.x, old firefox) that don't support onload on link
+		setTimeout( enableStylesheet, 3000 );
+	};
+
+	// loop through link elements in DOM
+	rp.poly = function(){
+		// double check this to prevent external calls from running
+		if( rp.support() ){
+			return;
+		}
+		var links = w.document.getElementsByTagName( "link" );
+		for( var i = 0; i < links.length; i++ ){
+			var link = links[ i ];
+			// qualify links to those with rel=preload and as=style attrs
+			if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+				// prevent rerunning on link
+				link.setAttribute( "data-loadcss", true );
+				// bind listeners to toggle media back
+				rp.bindMediaToggle( link );
+			}
+		}
+	};
+
+	// if unsupported, run the polyfill
+	if( !rp.support() ){
+		// run once at least
+		rp.poly();
+
+		// rerun poly on an interval until onload
+		var run = w.setInterval( rp.poly, 500 );
+		if( w.addEventListener ){
+			w.addEventListener( "load", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		} else if( w.attachEvent ){
+			w.attachEvent( "onload", function(){
+				rp.poly();
+				w.clearInterval( run );
+			} );
+		}
+	}
+
+
+	// commonjs
+	if( typeof exports !== "undefined" ){
+		exports.loadCSS = loadCSS;
+	}
+	else {
+		w.loadCSS = loadCSS;
+	}
+}( typeof global !== "undefined" ? global : this ) );
+</script>
+
+    <link rel="icon" href="/assets/favicon.ico">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" as="script">
+    <link rel="preload" href="/scripts/main.js" as="script">
+    <link rel="preload" as="font" href="/font/Oswald-Regular.ttf" crossorigin>
+    <link rel="preload" as="font" href="https://at.alicdn.com/t/font_327081_1dta1rlogw17zaor.woff" crossorigin>
+    
+    <!-- fancybox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" defer></script>
+    <!-- 百度统计  -->
+    
+    <!-- 谷歌统计  -->
+    
+</head>
+
+    
+        <body class="post-body">
+    
+    
+<header class="header">
+
+    <div class="read-progress"></div>
+    <div class="header-sidebar-menu">&#xe775;</div>
+    <!-- post页的toggle banner  -->
+    
+    <div class="banner">
+            <div class="blog-title">
+                <a href="/">fi3ework&#39;s Studio.</a>
+            </div>
+            <div class="post-title">
+                <a href="#" class="post-name">NTP服务详解</a>
+            </div>
+    </div>
+    
+    <a class="home-link" href="/">fi3ework's Studio.</a>
+</header>
+    <div class="wrapper">
+        <div class="site-intro" style="
+
+
+
+
+
+
+
+height:50vh;
+">
+    
+    <!-- 主页  -->
+    
+    
+    <!-- 404页  -->
+            
+    <div class="site-intro-placeholder"></div>
+    <div class="site-intro-img" style="background-image: url(/intro/post-bg.jpg)"></div>
+    <div class="site-intro-meta">
+        <!-- 标题  -->
+        <h1 class="intro-title">
+            <!-- 主页  -->
+            
+            NTP服务详解
+            <!-- 404 -->
+            
+        </h1>
+        <!-- 副标题 -->
+        <p class="intro-subtitle">
+            <!-- 主页副标题  -->
+            
+            
+            <!-- 404 -->
+            
+        </p>
+        <!-- 文章页meta -->
+        
+            <div class="post-intros">
+                <!-- 文章页标签  -->
+                
+                    <div class="post-intro-tags">
+    
+        <a class="post-tag" href="javascript:void(0);" data-tags="Linux">Linux</a>
+    
+</div>
+                
+                
+                    <div class="post-intro-read">
+                        <span>字数统计: <span class="post-count word-count">3.3k</span>阅读时长: <span class="post-count reading-time">13 min</span></span>
+                    </div>
+                
+                <div class="post-intro-meta">
+                    <span class="post-intro-calander iconfont-archer">&#xe676;</span>
+                    <span class="post-intro-time">2019/03/18</span>
+                    
+                    <span id="busuanzi_container_page_pv" class="busuanzi-pv">
+                        <span class="iconfont-archer">&#xe602;</span>
+                        <span id="busuanzi_value_page_pv"></span>
+                    </span>
+                    
+                    <span class="shareWrapper">
+                        <span class="iconfont-archer shareIcon">&#xe71d;</span>
+                        <span class="shareText">Share</span>
+                        <ul class="shareList">
+                            <li class="iconfont-archer share-qr" data-type="qr">&#xe75b;
+                                <div class="share-qrcode"></div>
+                            </li>
+                            <li class="iconfont-archer" data-type="weibo">&#xe619;</li>
+                            <li class="iconfont-archer" data-type="qzone">&#xe62e;</li>
+                            <li class="iconfont-archer" data-type="twitter">&#xe634;</li>
+                            <li class="iconfont-archer" data-type="facebook">&#xe67a;</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+        
+    </div>
+</div>
+        <script>
+ 
+  // get user agent
+  var browser = {
+    versions: function () {
+      var u = window.navigator.userAgent;
+      return {
+        userAgent: u,
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者安卓QQ浏览器
+        iPad: u.indexOf('iPad') > -1, //是否为iPad
+        webApp: u.indexOf('Safari') == -1, //是否为web应用程序，没有头部与底部
+        weixin: u.indexOf('MicroMessenger') == -1, //是否为微信浏览器
+        uc: u.indexOf('UCBrowser') > -1 //是否为android下的UC浏览器
+      };
+    }()
+  }
+  console.log("userAgent:" + browser.versions.userAgent);
+
+  // callback
+  function fontLoaded() {
+    console.log('font loaded');
+    if (document.getElementsByClassName('site-intro-meta')) {
+      document.getElementsByClassName('intro-title')[0].classList.add('intro-fade-in');
+      document.getElementsByClassName('intro-subtitle')[0].classList.add('intro-fade-in');
+      var postIntros = document.getElementsByClassName('post-intros')[0]
+      if (postIntros) {
+        postIntros.classList.add('post-fade-in');
+      }
+    }
+  }
+
+  // UC不支持跨域，所以直接显示
+  function asyncCb(){
+    if (browser.versions.uc) {
+      console.log("UCBrowser");
+      fontLoaded();
+    } else {
+      WebFont.load({
+        custom: {
+          families: ['Oswald-Regular']
+        },
+        loading: function () {  //所有字体开始加载
+          // console.log('loading');
+        },
+        active: function () {  //所有字体已渲染
+          fontLoaded();
+        },
+        inactive: function () { //字体预加载失败，无效字体或浏览器不支持加载
+          console.log('inactive: timeout');
+          fontLoaded();
+        },
+        timeout: 5000 // Set the timeout to two seconds
+      });
+    }
+  }
+
+  function asyncErr(){
+    console.warn('script load from CDN failed, will load local script')
+  }
+
+  // load webfont-loader async, and add callback function
+  function async(u, cb, err) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (cb) { o.addEventListener('load', function (e) { cb(null, e); }, false); }
+    if (err) { o.addEventListener('error', function (e) { err(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+
+  var asyncLoadWithFallBack = function(arr, success, reject) {
+      var currReject = function(){
+        reject()
+        arr.shift()
+        if(arr.length)
+          async(arr[0], success, currReject)
+        }
+
+      async(arr[0], success, currReject)
+  }
+
+  asyncLoadWithFallBack([
+    "https://cdn.jsdelivr.net/npm/webfontloader@1.6.28/webfontloader.min.js", 
+    "https://cdn.bootcss.com/webfont/1.6.28/webfontloader.js",
+    "/lib/webfontloader.min.js"
+  ], asyncCb, asyncErr)
+</script>        
+        <img class="loading" src="/assets/loading.svg" style="display: block; margin: 6rem auto 0 auto; width: 6rem; height: 6rem;" />
+        <div class="container container-unloaded">
+            <main class="main post-page">
+    <article class="article-entry">
+        <h2 id="NTP服务概述"><a href="#NTP服务概述" class="headerlink" title="NTP服务概述"></a>NTP服务概述</h2><p>NTP(Network Time Protocol)服务主要用于同步服务器时间。nptd 可以运行在多种模式下，包括对称的 主动、被动（active/passive)，客户端、服务端(client/server)，广播、多播(broadcast/multicase/manycase)。通常运行模式是以Daemon方式持续跟踪同步时钟源时间；当然也可以只运行一次，从外部时钟源同步时间（从上次纪录的频度误差文件中读取频度误差值）。广播与多播模式下客户端能够自动发现时钟源服务器，并计算各个服务器的时延然后自动完成配置。NTP服务端口为123，使用UDP协议传输。<br>NTP使用树状的层级(stratum)时钟源，层级数字越小优先级越高，低层级的NTP服务同步高层级的NTP服务。低层级的服务同时也可以向更低层级的NTP服务提供时钟校准功能。0层的服务器采用的是原子钟、GPS钟等物理设备，stratum 1与stratum 0 是直接相连的，往后的stratum与上一层stratum通过网络相连，同一层的server也可以交互，如下图：<br><img src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Network_Time_Protocol_servers_and_clients.svg" alt><br>2014年暴露的NTP服务重大漏洞，ntp-4.2.8p9之前的版本都会受影响。造成基于网络包发射的分布式拒绝服务和本地负载升高导致的提权风险。出于安全考虑，NTP服务器尽量不开放无用的端口，添加有效restrict条目，尽快升级最新版本。<br>该文档不包含NTP加密传输和某些冷门的配置，如有需要，可以自行查阅man文档: <strong>man ntp_auth, man ntp.conf</strong>等。<br>NTP官网：<a href="http://www.ntp.org" target="_blank" rel="noopener">http://www.ntp.org</a></p>
+<h2 id="NTP的安装和启停"><a href="#NTP的安装和启停" class="headerlink" title="NTP的安装和启停"></a>NTP的安装和启停</h2><p>一般情况下，NTP服务是默认安装的服务,可以使用yum直接安装：</p>
+<pre><code>sudo yum install ntp -y
+</code></pre><p>也可以选择编译安装：</p>
+<pre><code>wget http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/ntp-4.2.8p10.tar.gz
+tar xzvf ntp-4.2.8p10.tar.gz
+cd ntp-4.2.8p10 &amp;&amp; ./configure &amp;&amp; make &amp;&amp; make install
+</code></pre><p>启停NTP服务：</p>
+<pre><code>/etc/init.d/ntpd [start|stop|restart]
+</code></pre><p>或者在redhat 7系列中执行：</p>
+<pre><code>systemctl [start|stop|restart] ntpd.service
+</code></pre><h2 id="ntp配置文件详解"><a href="#ntp配置文件详解" class="headerlink" title="ntp配置文件详解"></a>ntp配置文件详解</h2><h3 id="时钟源配置"><a href="#时钟源配置" class="headerlink" title="时钟源配置"></a>时钟源配置</h3><ul>
+<li>server address [options]: 选取的参考时钟源</li>
+<li>peer address [options]: 与本机一起作为共同时钟源对外服务，在服务启动初始化时，两台服务器会自行协议主备关系</li>
+<li>broadcast address [options]: 作为时钟源向指定广播域发送时钟信息</li>
+<li>manycastclient address [options]: 接受广播的NTP信息客户端配置</li>
+</ul>
+<h4 id="时钟源配置常用选项"><a href="#时钟源配置常用选项" class="headerlink" title="时钟源配置常用选项"></a>时钟源配置常用选项</h4><ul>
+<li>burst:时钟源可以访问时发送8个包，默认发送间隔2秒。只用于server</li>
+<li>iburst: 时钟源不可访问时发送8个包，默认发送间隔2秒。只用于server</li>
+<li>minpool/maxpool: 最小/最大轮询时间间隔，间隔为2的minpool/maxpool次方，取值4-17。只用于peer和server命令。</li>
+<li>noselect: 指定时钟源不再有效，只用于peer和server命令。</li>
+<li>prefer: 指定时钟源标志为偏好，只用于peer和server命令。</li>
+<li>ttl: 指定报文生存周期，仅用于broadcast和manycastclient命令。<br>%%Ref. man ntp.conf</li>
+</ul>
+<h3 id="driftfile"><a href="#driftfile" class="headerlink" title="driftfile"></a>driftfile</h3><p>将自己主机的bios芯片震荡频率与上层的Time server频率比较，将误差记录在这个文件里，条目设置格式：</p>
+<pre><code>driftfile /etc/ntp/drift
+</code></pre><h3 id="pidfile"><a href="#pidfile" class="headerlink" title="pidfile"></a>pidfile</h3><p>记录应用程序进程ID（PID）文件保存的路径，设置格式：</p>
+<pre><code>pidfile    /var/run/ntpd.pid
+</code></pre><h3 id="logfile"><a href="#logfile" class="headerlink" title="logfile"></a>logfile</h3><p>日志文件保存路径，设置格式：</p>
+<pre><code>logfile    /var/log/ntp.log
+</code></pre><h3 id="tinker"><a href="#tinker" class="headerlink" title="tinker"></a>tinker</h3><p>该命令修改当前系统给定的时钟统合算法(the clock discipline algorithm)，和芯片硬件相关。该默认值已经优化过了,一般不需修改。常用字段解释如下:</p>
+<ul>
+<li>panic: 指定一个时间偏移跃变的阈值，默认是1000秒。如果设置为0，该功能将会关闭，任意一个时钟偏移同步都将会被接受。就是说默认情况下如果时间偏移超过1000秒，将会判断为异常时间，不会进行同步，但是如果设置成0就会禁用这一个功能，当ntp server时间异常波动大于1000秒时，会导致本地的时间发生突变，这可能会导致某些应用异常。</li>
+<li>step: 指定时间同步步长，单位是秒，默认是0.128秒。如果设置为0，该进步式时间调整功能将会关闭。注意：如果改值设置为0或者大于0.5秒时，操作系统内核的时间discipline也会被禁用。</li>
+</ul>
+<h3 id="访问权限配置"><a href="#访问权限配置" class="headerlink" title="访问权限配置"></a>访问权限配置</h3><p>ntpd实现了基于网段/掩码的通用权限控制列表，主要目的是为了防止有问题的外部时钟源影响本地时钟服务，<em>restrict</em>意为允许指定IP访问，并使用NTP部分功能，<em>discard</em>定义了发包间隔时间的规则，超过发送间隔的报文将被丢弃。<br>设置格式为：</p>
+<pre><code>discard \[ average avg \]\[ minimum min \] \[ monitor prob \]
+restrict numeric_address \[mask numeric\_mask\] \[flag\]  \[\.\.\.\]
+</code></pre><h4 id="访问权限配置常用Flag"><a href="#访问权限配置常用Flag" class="headerlink" title="访问权限配置常用Flag"></a>访问权限配置常用Flag</h4><ul>
+<li>ignore: 忽略匹配源目的地址发送的所有包</li>
+<li>noquery：忽略ntpq和ntpdc查询命令，不影响ntpd服务</li>
+<li>nomodify: 忽略修改NTP服务器状态的命令(如修改运行时间，配置等命令)</li>
+<li>notrap: 拒绝向某些主机提供模式6的trap服务，trap服务为NTP的子系统，主要为远程日志程序所使用</li>
+<li>noserve：除了ntpq和ntpdc，拒绝所有报文</li>
+<li>nopeer: 拒绝peer, broadcast,manycastclient的连接报文<br>%% Ref. man ntp_acc</li>
+</ul>
+<h2 id="专有云ntp-conf配置例子详解"><a href="#专有云ntp-conf配置例子详解" class="headerlink" title="专有云ntp.conf配置例子详解"></a>专有云ntp.conf配置例子详解</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">#记录系统时钟频率差异文件</span><br><span class="line">driftfile /var/lib/ntp/drift</span><br><span class="line"># pid: 进程ID号文件</span><br><span class="line">pidfile /var/run/ntpd.pid</span><br><span class="line"># ntp服务记录日志路径</span><br><span class="line">logfile /var/log/ntp.log</span><br><span class="line"></span><br><span class="line"># 不准外部请求修改/查询本地ntp配置，-6意为IPv6地址</span><br><span class="line">restrict    default  kod nomodify notrap nopeer noquery</span><br><span class="line">restrict -6 default  kod nomodify notrap nopeer noquery</span><br><span class="line">restrict    127.0.0.1</span><br><span class="line"># 默认的本地时钟源，没有NTP服务可用时，使用它为局域网用户提供服务，这里层级可以设置低一点</span><br><span class="line">server 127.127.1.0</span><br><span class="line">fudge 127.127.1.0 stratum 5</span><br><span class="line"></span><br><span class="line">restrict ntp1.aliyun.com</span><br><span class="line">restrict ntp2.aliyun.com</span><br><span class="line">restrict ntp3.aliyun.com</span><br><span class="line">restrict ntp4.aliyun.com</span><br><span class="line">restrict ntp5.aliyun.com</span><br><span class="line">restrict ntp6.aliyun.com</span><br><span class="line">restrict ntp7.aliyun.com</span><br><span class="line"></span><br><span class="line">server ntp1.aliyun.com  iburst minpoll 4 maxpoll 10</span><br><span class="line">server ntp2.aliyun.com  iburst minpoll 4 maxpoll 10</span><br><span class="line">server ntp3.aliyun.com  iburst minpoll 4 maxpoll 10</span><br><span class="line">server ntp4.aliyun.com  iburst minpoll 4 maxpoll 10</span><br><span class="line">server ntp5.aliyun.com  iburst minpoll 4 maxpoll 10</span><br><span class="line">server ntp6.aliyun.com  iburst minpoll 4 maxpoll 10</span><br><span class="line">server ntp7.aliyun.com  iburst minpoll 4 maxpoll 10</span><br></pre></td></tr></table></figure>
+<h2 id="NTP相关命令"><a href="#NTP相关命令" class="headerlink" title="NTP相关命令"></a>NTP相关命令</h2><h3 id="ntpd"><a href="#ntpd" class="headerlink" title="ntpd"></a>ntpd</h3><p>ntpd是一个管理操作系统时钟的守护进程和命令。时钟调整模式有步长(stepped)模式和微调(slew)模式。默认情况下，ntp服务在步长阈值(128ms)内采用微调模式校正，如果超过阈值则采用步长模式校正时间。ntpd 微调校准的最大频率是 500 个 PPM (parts-per-million)每秒，也就是每秒校准 5/10,000 秒。因此会导致本地时间与时钟源之间需要很长时间才能将时差同步到一个可接受的范围，大概是2000秒同步一秒。</p>
+<ul>
+<li><p>命令格式</p>
+<p>  ntpd [ -aAbdgLmNPqx ] [ -c conffile ] [ -f driftfile ] [ -g ] [ -k keyfile ] [ -l logfile ] [ -N high ] [ -p pidfile ] [ -r broadcastdelay ] [ -s statsdir ] [ -t key ] [ -v variable ] [ -V variable ] [ -x ]</p>
+</li>
+<li>常用参数</li>
+</ul>
+<p>-c conffile: 指定配置文件名称<br>-d: 启用调试模式<br>-N priority: 指定优先级运行ntpd进程<br>-q: 仅同步一次后退出<br>-l logfile: 指定日志路径<br>-s statsdir: 指定统计工具生成的文件所在目录<br>-x: 强制使用微调模式校正时间，使用该参数主要为了避免时间大幅跳变影响应用<br>-g: 默认情况下本地时钟和时钟源相差超过1000秒，ntp服务会在日志上打印并退出，ntpd命令启动该选项后就没有这个限制，但时钟正常后再发生大于100秒的时差，ntp服务还是会退出，建议和-x参数一起使用比较安全。</p>
+<h4 id="专有云NTPD的配置-etc-sysconfig-ntpd"><a href="#专有云NTPD的配置-etc-sysconfig-ntpd" class="headerlink" title="专有云NTPD的配置(/etc/sysconfig/ntpd)"></a>专有云NTPD的配置(/etc/sysconfig/ntpd)</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 指定用户启动ntp服务的默认命令参数，</span><br><span class="line">OPTIONS=&quot;-x -g -u ntp:ntp -p /var/run/ntpd.pid&quot;</span><br><span class="line"></span><br><span class="line"># Set to &apos;yes&apos; to sync hw clock after successful ntpdate</span><br><span class="line">SYNC_HWCLOCK=no</span><br><span class="line"></span><br><span class="line"># Additional options for ntpdate</span><br><span class="line">NTPDATE_OPTIONS=&quot;&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="ntpdate"><a href="#ntpdate" class="headerlink" title="ntpdate"></a>ntpdate</h3><p>通过轮询指定的确定正确时间的NTP服务器， 也可以用于设置本地日期和时间。用于同步时间时需要将本地ntp服务停止。</p>
+<ul>
+<li>命令格式<br>‘’ntpdate [参数] [时钟源主机名/IP]</li>
+<li>常用参数<br>-q: 查询本地时钟和远程时钟源时间差，不对本地时钟做实际同步操作<br>-d: 开启debug模式，打印debug日志，不对本地时钟做实际同步操作<br>-t: 指定超时时间，以秒为单位</li>
+</ul>
+<h3 id="ntpq"><a href="#ntpq" class="headerlink" title="ntpq"></a>ntpq</h3><p>命令主要用于监控ntp服务同步状态，同样有交互命令模式</p>
+<ul>
+<li>命令格式<br>‘’ntpq [参数] [ -c 子命令 ] [ 主机名/IP]</li>
+<li>常用参数<br>-d: debug模式<br>-c: 指定交互式格式的命令<br>-i: 进入交互模式，无参数自动进入<br>-p: 显示服务器同级设备的列表，并显示一个它们状态的总结。<br>-n: 以十进制ip格式显示</li>
+</ul>
+<ul>
+<li>输出格式举例</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"> # ntpq -np 127.0.0.1</span><br><span class="line">remote           refid      st t when poll reach   delay   offset  jitter</span><br><span class="line">==============================================================================</span><br><span class="line">-182.92.12.11    10.137.38.86     2 u   32   64  377   31.954    4.376   0.308</span><br><span class="line">+120.25.115.19   10.137.53.7      2 u    5   64  377   30.936   -0.113   0.139</span><br><span class="line">+120.25.115.20   10.137.53.7      2 u   39   64  377   33.558    1.711   0.115</span><br><span class="line">*120.25.108.11   10.137.53.7      2 u   25   64  377   30.746    0.136   0.151</span><br><span class="line">-203.107.6.88    100.107.25.114   2 u   35   64  377   22.565    6.049   0.177</span><br><span class="line"> 127.0.0.1       .INIT.          16 l    - 1024    0    0.000    0.000   0.000</span><br></pre></td></tr></table></figure>
+<p>其中，里面的*意为本地NTP服务选中的主要时钟源，+意为备用时钟源，</p>
+<ul>
+<li>remote – 用于同步的远程节点或服务器。“LOCAL”表示本机(当无外部可用时钟源时会出现）</li>
+<li>refid – 远程的服务器进行同步的更高一级服务器，如果值为INIT说明正在关联初始化，值为LOCAL说明为本地时钟源</li>
+<li>st – 远程节点或服务器的Stratum(stratum取值为0-15)</li>
+<li>t – 类型 (u: unicast（单播） 或 manycast（选播） 客户端, b: broadcast（广播） 或 multicast（多播） 客户端, l: 本地时钟, s: 对称节点（用于备份）, A: 选播服务器, B: 广播服务器, M: 多播服务器</li>
+<li>when – 最后一次同步到现在的时间</li>
+<li>poll – 轮询同步的频率，同步时间为2^poll</li>
+<li>reach – 一个8位的左移移位寄存器值，用来测试能否和服务器连接，每成功连接一次它的值就会增加，以 8 进制显示</li>
+<li>delay – 从本地到远程节点或服务器通信的往返时间</li>
+<li>offset – 主机与远程节点或服务器时间源的时间偏移量(以方均根表示，单位为毫秒)</li>
+<li>jitter – 与远程节点同步的时间源的平均偏差（多个时间样本中的 offset 的偏差，单位是毫秒），这个数值的绝对值越小，主机的时间就越精确</li>
+<li>–: 无状态，暂不使用</li>
+<li>x: 已不再使用</li>
+<li>+: 良好的且优先使用的远程节点或服务器，通常为备机</li>
+<li>*: 当前作为优先主同步对象的远程节点或服务器，同步主机</li>
+</ul>
+<h3 id="ntpdc"><a href="#ntpdc" class="headerlink" title="ntpdc"></a>ntpdc</h3><p>命令主要用于查询ntp服务端状态，也能查询NTP服务运行时的统计数据。同时几乎所有在配置文件中可以用的配置命令都可以在ntpdc的交互命令行模式中执行。</p>
+<ul>
+<li><p>命令格式</p>
+<p>  ntpdc  [-46lpsidnv?!]  [-c  command] [-D debuglvl] [host] […]</p>
+</li>
+<li>常用命令参数解释<br>-c: 输入对应查询命令<br>-i: 强制进入交互命令行模式<br>-l：打印本机ntp服务器peer的列表，等价于-c listpeers<br>-n: 以数字模式输出主机地址，进入交互命令行模式<br>-p: 打印本机ntp服务器peer的列表和各自的状态,等价于-c peers<br>-s: 打印本机ntp服务器peer的列表和各自的状态，格式和-p不一样，等价于-c dmpeers<br>交互模式可用命令可以使用man命令查看</li>
+</ul>
+<h2 id="附录：有效的国内时钟源服务器"><a href="#附录：有效的国内时钟源服务器" class="headerlink" title="附录：有效的国内时钟源服务器"></a>附录：有效的国内时钟源服务器</h2><ul>
+<li>阿里云提供公共NTP服务，由于阿里云有大量外售的云主机以及YunOS手机天猫魔盒等都需要精确时间同步，因此建设了这一基础设施，公网均可访问，授时信号来自GPS、北斗两套卫星信号，并配备原子钟守时，以下7个域名提供服务，可以直接使用。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">http://ntp1.aliyun.com</span><br><span class="line">http://ntp2.aliyun.com</span><br><span class="line">http://ntp3.aliyun.com</span><br><span class="line">http://ntp4.aliyun.com</span><br><span class="line">http://ntp5.aliyun.com</span><br><span class="line">http://ntp6.aliyun.com</span><br><span class="line">http://ntp7.aliyun.com</span><br></pre></td></tr></table></figure>
+<ul>
+<li>windows服务器，或者你使用ntpdate，那么可以直接使用<code>http://time.pool.aliyun.com</code></li>
+<li>另外，如果服务器在国外，苹果提供的公共NTP服务，以下7个域名：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">http://time1.apple.com</span><br><span class="line">http://time2.apple.com</span><br><span class="line">http://time3.apple.com</span><br><span class="line">http://time4.apple.com</span><br><span class="line">http://time5.apple.com</span><br><span class="line">http://time6.apple.com</span><br><span class="line">http://time7.apple.com</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Google（谷歌）提供的NTP服务，以下4个域名：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">http://time1.google.com</span><br><span class="line">http://time2.google.com</span><br><span class="line">http://time3.google.com</span><br><span class="line">http://time4.google.com</span><br></pre></td></tr></table></figure>
+
+    </article>
+    <!-- license  -->
+    
+        <div class="license-wrapper">
+            <p>原文作者：<a href="http://yoursite.com">Arlen Li</a>
+            </p><p>原文链接：<a href="http://yoursite.com/2019/03/18/NTP服务详解/">http://yoursite.com/2019/03/18/NTP服务详解/</a>
+            </p><p>发表日期：<a href="http://yoursite.com/2019/03/18/NTP服务详解/">March 18th 2019, 5:20:32 pm</a>
+            </p><p>更新日期：<a href="http://yoursite.com/2019/03/18/NTP服务详解/">April 21st 2019, 6:18:03 pm</a>
+            </p><p>版权声明：本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可</p>
+        </div>
+    
+    <!-- paginator  -->
+    <ul class="post-paginator">
+        <li class="next">
+            
+                <div class="nextSlogan">Next Post</div>
+                <a href="/2019/03/18/Confluence-安装/" title="Confluence 安装">
+                    <div class="nextTitle">Confluence 安装</div>
+                </a>
+            
+        </li>
+        <li class="previous">
+            
+        </li>
+    </ul>
+    <!-- 评论插件 -->
+    <!-- 来必力City版安装代码 -->
+
+<!-- City版安装代码已完成 -->
+    
+    
+    <!-- partial('_partial/comment/changyan') -->
+    <!--PC版-->
+
+
+    
+    
+
+    <!-- 评论 -->
+</main>
+            <!-- profile -->
+            
+        </div>
+        <footer class="footer footer-unloaded">
+    <!-- social  -->
+    
+    <div class="social">
+        
+    
+        
+            
+                <a href="mailto:12345@qq.com" class="iconfont-archer email" title="email"></a>
+            
+        
+    
+        
+            
+                <a href="//github.com/fi3ework" class="iconfont-archer github" target="_blank" title="github"></a>
+            
+        
+    
+        
+            
+                <span class="iconfont-archer wechat" title="wechat">
+                  
+                  <img class="profile-qr" src="/assets/example_qr.png">
+                </span>
+            
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+    </div>
+    
+    <!-- powered by Hexo  -->
+    <div class="copyright">
+        <span id="hexo-power">Powered by <a href="https://hexo.io/" target="_blank">Hexo</a></span><span class="iconfont-archer power">&#xe635;</span><span id="theme-info">theme <a href="https://github.com/fi3ework/hexo-theme-archer" target="_blank">Archer</a></span>
+    </div>
+    <!-- 不蒜子  -->
+    
+    <div class="busuanzi-container">
+    
+     
+    <span id="busuanzi_container_site_pv">PV: <span id="busuanzi_value_site_pv"></span> :)</span>
+    
+    </div>
+    
+</footer>
+    </div>
+    <!-- toc -->
+    
+    <div class="toc-wrapper" style=
+    
+
+
+
+
+
+
+
+top:50vh;
+
+    >
+        <div class="toc-catalog">
+            <span class="iconfont-archer catalog-icon">&#xe613;</span><span>CATALOG</span>
+        </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#NTP服务概述"><span class="toc-number">1.</span> <span class="toc-text">NTP服务概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NTP的安装和启停"><span class="toc-number">2.</span> <span class="toc-text">NTP的安装和启停</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ntp配置文件详解"><span class="toc-number">3.</span> <span class="toc-text">ntp配置文件详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#时钟源配置"><span class="toc-number">3.1.</span> <span class="toc-text">时钟源配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#时钟源配置常用选项"><span class="toc-number">3.1.1.</span> <span class="toc-text">时钟源配置常用选项</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#driftfile"><span class="toc-number">3.2.</span> <span class="toc-text">driftfile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pidfile"><span class="toc-number">3.3.</span> <span class="toc-text">pidfile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#logfile"><span class="toc-number">3.4.</span> <span class="toc-text">logfile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tinker"><span class="toc-number">3.5.</span> <span class="toc-text">tinker</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#访问权限配置"><span class="toc-number">3.6.</span> <span class="toc-text">访问权限配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#访问权限配置常用Flag"><span class="toc-number">3.6.1.</span> <span class="toc-text">访问权限配置常用Flag</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#专有云ntp-conf配置例子详解"><span class="toc-number">4.</span> <span class="toc-text">专有云ntp.conf配置例子详解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NTP相关命令"><span class="toc-number">5.</span> <span class="toc-text">NTP相关命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ntpd"><span class="toc-number">5.1.</span> <span class="toc-text">ntpd</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#专有云NTPD的配置-etc-sysconfig-ntpd"><span class="toc-number">5.1.1.</span> <span class="toc-text">专有云NTPD的配置(/etc/sysconfig/ntpd)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ntpdate"><span class="toc-number">5.2.</span> <span class="toc-text">ntpdate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ntpq"><span class="toc-number">5.3.</span> <span class="toc-text">ntpq</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ntpdc"><span class="toc-number">5.4.</span> <span class="toc-text">ntpdc</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#附录：有效的国内时钟源服务器"><span class="toc-number">6.</span> <span class="toc-text">附录：有效的国内时钟源服务器</span></a></li></ol>
+    </div>
+    
+    <div class="back-top iconfont-archer">&#xe639;</div>
+    <div class="sidebar sidebar-hide">
+    <ul class="sidebar-tabs sidebar-tabs-active-0">
+        <li class="sidebar-tab-archives"><span class="iconfont-archer">&#xe67d;</span><span class="tab-name">Archive</span></li>
+        <li class="sidebar-tab-tags"><span class="iconfont-archer">&#xe61b;</span><span class="tab-name">Tag</span></li>
+        <li class="sidebar-tab-categories"><span class="iconfont-archer">&#xe666;</span><span class="tab-name">Cate</span></li>
+    </ul>
+    <div class="sidebar-content sidebar-content-show-archive">
+          <div class="sidebar-panel-archives">
+    <!-- 在ejs中将archive按照时间排序 -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="total-and-search">
+        <div class="total-archive">
+        Total : 7
+        </div>
+        <!-- search  -->
+        
+    </div>
+    
+    <div class="post-archive">
+    
+    
+    
+    
+    <div class="archive-year"> 2019 </div>
+    <ul class="year-list">
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">04/21</span><a class="archive-post-title" href="/2019/04/21/hello-world/">Hello World</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/19</span><a class="archive-post-title" href="/2019/03/19/使用Hexo和GitPage搭建免费个人博客/">使用Hexo和GitPage搭建免费个人博客</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/19</span><a class="archive-post-title" href="/2019/03/19/MongoDB-学习笔记-权限管理/">MongoDB 学习笔记-权限管理</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/18</span><a class="archive-post-title" href="/2019/03/18/MySQL-安全加固/">MySQL 安全加固</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/18</span><a class="archive-post-title" href="/2019/03/18/NTP服务详解/">NTP服务详解</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/18</span><a class="archive-post-title" href="/2019/03/18/MongoDB-学习笔记-入门/">MongoDB 学习笔记-入门</a>
+        </li>
+    
+    
+        <li class="archive-post-item">
+            <span class="archive-post-date">03/18</span><a class="archive-post-title" href="/2019/03/18/Confluence-安装/">Confluence 安装</a>
+        </li>
+    
+    </ul></div>
+  </div>
+        <div class="sidebar-panel-tags">
+    <div class="sidebar-tags-name">
+    
+        <span class="sidebar-tag-name" data-tags="Linux"><span class="iconfont-archer">&#xe606;</span>Linux</span>
+    
+        <span class="sidebar-tag-name" data-tags="NoSQL"><span class="iconfont-archer">&#xe606;</span>NoSQL</span>
+    
+        <span class="sidebar-tag-name" data-tags="MongoDB"><span class="iconfont-archer">&#xe606;</span>MongoDB</span>
+    
+        <span class="sidebar-tag-name" data-tags="MySQL"><span class="iconfont-archer">&#xe606;</span>MySQL</span>
+    
+    </div>
+    <div class="iconfont-archer sidebar-tags-empty">&#xe678;</div>
+    <div class="tag-load-fail" style="display: none; color: #ccc; font-size: 0.6rem;">
+    缺失模块。<br>
+    1、请确保node版本大于6.2<br>
+    2、在博客根目录（注意不是archer根目录）执行以下命令：<br>
+    <span style="color: #f75357; font-size: 1rem; line-height: 2rem;">npm i hexo-generator-json-content --save</span><br>
+    3、在根目录_config.yml里添加配置：
+    <pre style="color: #787878; font-size: 0.6rem;">
+jsonContent:
+  meta: false
+  pages: false
+  posts:
+    title: true
+    date: true
+    path: true
+    text: false
+    raw: false
+    content: false
+    slug: false
+    updated: false
+    comments: false
+    link: false
+    permalink: false
+    excerpt: false
+    categories: true
+    tags: true</pre>
+    </div> 
+    <div class="sidebar-tags-list"></div>
+</div>
+        <div class="sidebar-panel-categories">
+    <div class="sidebar-categories-name">
+    
+    </div>
+    <div class="iconfont-archer sidebar-categories-empty">&#xe678;</div>
+    <div class="sidebar-categories-list"></div>
+</div>
+    </div>
+</div> 
+    <script>
+    var siteMeta = {
+        root: "/",
+        author: "Arlen Li"
+    }
+</script>
+    <!-- CDN failover -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        if (typeof window.$ === 'undefined')
+        {
+            console.warn('jquery load from jsdelivr failed, will load local script')
+            document.write('<script src="/lib/jquery.min.js">\x3C/script>')
+        }
+    </script>
+    <script src="/scripts/main.js"></script>
+    <!-- algolia -->
+    
+    <!-- busuanzi  -->
+    
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- CNZZ  -->
+    
+    </div>
+    <!-- async load share.js -->
+    
+        <script src="/scripts/share.js" async></script>    
+     
+    </body>
+</html>
+
+
